@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <title>Twitch Big Chat</title>
+  <meta name="description" content="Big Chat Stream - great for separate displays or dashboards" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:100,400,700" rel="stylesheet" />
+  <link href="https://unpkg.com/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Roboto Mono', monospace; }
+  </style>
+
+</head>
+<body class="bg-black text-white text-5xl leading-tight">
+
+  <header class="bg-black text-grey-darker text-2xl flex sticky pin-t pin-x z-20 shadow-lg">
+    <i class="p-5 text-red-light roman opacity-50">#</i>
+    <label class="flex flex-1">
+      <input type="text" id="channel" class="w-full p-0 m-0 bg-transparent text-grey hover:text-white focus:text-white font-bold inline-block appearance-none focus:outline-none" value="qrayg, sdshepard, rifftrax" placeholder="channel name" />
+    </label>
+    <i class="ml-auto pr-5 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" class="text-purple align-middle">
+        <title>Twitch</title>
+        <path class="fill-current" d="M494,372 L492,376 L492,395 L498,395 L498,398 L502,398 L505,395 L510,395 L517,388 L517,372 L494,372 Z M515,387 L511,391 L505,391 L501,394 L501,391 L496,391 L496,374 L515,374 L515,387 Z M510,379 L510,386 L508,386 L508,379 L510,379 Z M504,379 L504,386 L502,386 L502,379 L504,379 Z" transform="translate(-490 -370)"></path>
+      </svg>
+    </i>
+  </header>
+  <ul class="chat list-reset"></ul>
+
+  <section class="status text-2xl uppercase flex items-center justify-center absolute pin z-10">
+    <h3 class="opacity-25"><i></i> <b></b></h3>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://unpkg.com/twitch-js@>2.0.0-beta/dist/twitch-js.min.js"></script>
+  <script>
+    $(function(){
+
+      // twitch
+      // token: https://twitchapps.com/tmi/
+      let token = 'oauth:yourauthcode';
+      let username = 'yourusername';
+      let channels = $('#channel').val().split(/[ ,]+/);
+      let { api, chat, chatConstants } = new TwitchJs({ token, username });
+
+      // message logic
+      function chatStart(ch){
+        chat.connect().then(() => {
+          Promise.all(ch.map(channel => chat.join(channel))).then(channelStates => {
+            chat.on('*', message => {
+              if(message.command == 'PRIVMSG' || message.command == 'USERNOTICE'){
+                var isCaster = (message.tags.badges['broadcaster']) ? 'border-yellow ' : 'border-transparent ',
+                  isSubr = (message.tags.badges['subscriber'] >= 0) ? 'border-blue-light ' : 'border-transparent ',
+                  isNotice = (message.command == 'USERNOTICE') ? 'bg-red-light ' : 'bg-grey-darkest ',
+                  hasMessage = (message.message !== 'undefined') ? message.message : 'No Message',
+                  theMessage = formatMessage(hasMessage, message.tags.emotes);
+
+                // the markup
+                $('.chat').append(
+                  '<li class="p-4 break-words">'+
+                    '<p class="tracking-tight">'+
+                      '<small class="util mb-2 text-2xl tracking-normal flex items-center opacity-50">'+
+                        '<b class="user">' + message.username +'</b>'+
+                        '<b class="channel ml-auto text-lg opacity-50">'+ message.channel +'</b>'+
+                      '</small>'+
+                      '<i class="message border-l-8 py-6 px-8 roman block opacity-75 rounded-sm '+ isCaster + isSubr + isNotice +'">'+ theMessage +'</i>'+
+                    '</p>'+
+                  '</li>'
+                );
+
+                // scroll to bottom
+                $('html, body').animate({ scrollTop: $(document).height() }, 'slow');
+
+                // trim - let's not eat too much ram
+                if($('.chat').children().length > 50) {
+                  var oldMessages = [].slice.call($('.chat').children()).slice(0, 1);
+                  for(var i in oldMessages) oldMessages[i].remove();
+                }
+
+                // remove loading
+                $('.status').hide();
+
+              }
+              //console.log(message);
+            });
+            $('.status i').removeClass().addClass('fa fa-thumbs-up');
+            $('.status b').text('Connected');
+          });
+        });
+      }
+
+      function chatEnd(){
+        channels.map(channel => chat.part(channel));
+        // $('.chat li').remove();
+        // $('.status').show();
+        // $('.status i').removeClass().addClass('fa fa-ban');
+        // $('.status b').text('Disconnected');
+      };
+
+      // message format
+      function formatMessage(message, emotes){
+        var newMessage = message.split('');
+        for(var emoteIndex in emotes){
+          var emote = emotes[emoteIndex].id,
+            emoteStart = emotes[emoteIndex].start,
+            emoteEnd = emotes[emoteIndex].end,
+            length =  emoteEnd - emoteStart,
+            empty = Array.apply(null, new Array(length + 1)).map(function() { return '' });
+          newMessage = newMessage.slice(0, emoteStart).concat(empty).concat(newMessage.slice(emoteEnd + 1, newMessage.length));
+          newMessage.splice(emoteStart, 1, '<img class="align-middle" src="http://static-cdn.jtvnw.net/emoticons/v1/' + emote + '/3.0" />');
+        }
+        return newMessage.join('');
+      }
+
+      chatStart(channels);
+
+      // custom channels
+      $('#channel').on('focus', function(){
+        $(this).select();
+      }).on('keyup', function(e){
+        e.preventDefault();
+        chatEnd();
+        if(e.keyCode === 13){
+          $(this).blur();
+          $('.chat li').remove();
+          $('.status i').removeClass().addClass('fa fa-spinner fa-spin');
+          $('.status b').text('Connecting');
+          var tojoin = $(this).val().split(/[ ,]+/);
+          tojoin.map(channel => chat.join(channel));
+        }
+      });
+
+    });
+  </script>
+
+</body>
+</html>
