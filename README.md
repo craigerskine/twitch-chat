@@ -1,7 +1,7 @@
 Usage:
 ---
 
-Edit `index.html` file and replace the `token` and `username` variables with your own Twitch credentials. You can generate an oauth token via [Twitch Chat OAuth](https://twitchapps.com/tmi)
+Edit `index.html` and replace the `token` and `username` variables with your own Twitch credentials. You can generate an oauth token via [Twitch Chat OAuth](https://twitchapps.com/tmi)
 
 Todo
 ---
