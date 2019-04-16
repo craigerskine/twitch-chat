@@ -1,3 +1,5 @@
+![screenshot](screen.jpg)
+
 Features:
 ---
 * Some Emote support. (I'm not sure why some Emotes just render their text equivalent, maybe that's normal?)
