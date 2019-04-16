@@ -1,3 +1,10 @@
+Features:
+---
+* Some Emote support. (I'm not sure why some Emotes just render their text equivalent, maybe that's normal?)
+* Subscribers posts are highlighted with a left blue border.
+* Broadcaster's posts are highlighted in a yellow border.
+* USERNOTICE event posts are highlighted in a red background.
+
 Usage:
 ---
 
