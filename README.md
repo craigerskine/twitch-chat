@@ -6,6 +6,7 @@ Features:
 * Subscribers posts are highlighted with a left blue border.
 * Broadcaster's posts are highlighted in a yellow border.
 * USERNOTICE event posts are highlighted in a red background.
+* Auto dynamic truncation to 50 newest posts to keep memory usage down.
 
 Usage:
 ---
